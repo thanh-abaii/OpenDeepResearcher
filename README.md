@@ -1,84 +1,98 @@
 # OpenDeepResearcher
 
-This notebook implements an **AI researcher** that continuously searches for information based on a user query until the system is confident that it has gathered all the necessary details. It makes use of several services to do so:
-
-- **SERPAPI**: To perform Google searches.
-- **Jina**: To fetch and extract webpage content.
-- **OpenRouter** (default model: `anthropic/claude-3.5-haiku`): To interact with a LLM for generating search queries, evaluating page relevance, and extracting context.
+## Overview
+OpenDeepResearcher is an AI-powered research assistant that continuously searches for relevant information based on a user query until all necessary details are gathered. It leverages multiple AI and search APIs to automate and optimize the research process.
 
 ## Features
+- **Iterative Research Loop**: The system refines its search iteratively until no further queries are required.
+- **Asynchronous Processing**: Searches, webpage fetching, evaluation, and context extraction are performed concurrently for improved speed.
+- **Duplicate Filtering**: Aggregates and deduplicates links within each round to avoid redundant processing.
+- **LLM-Powered Decision Making**: Uses AI models to generate new search queries, decide page usefulness, extract relevant context, and produce a final comprehensive report.
 
-- **Iterative Research Loop:** The system refines its search queries iteratively until no further queries are required.
-- **Asynchronous Processing:** Searches, webpage fetching, evaluation, and context extraction are performed concurrently to improve speed.
-- **Duplicate Filtering:** Aggregates and deduplicates links within each round, ensuring that the same link isn’t processed twice.
-- **LLM-Powered Decision Making:** Uses the LLM to generate new search queries, decide on page usefulness, extract relevant context, and produce a final comprehensive report.
-- **Gradio Interface:** Use the `open-deep-researcher - gradio` notebook if you want to use this in a functional UI
+## Technologies Used
+### **1. Together AI**
+- Generates precise search queries based on the user's topic.
+- Default model: `deepseek-ai/DeepSeek-R1-Distill-Llama-70B`
+
+### **2. Tavily API**
+- Performs web scraping and extraction to retrieve content from relevant sources.
+
+### **3. OpenAI (O1-Mini)**
+- Generates the final long-form research report.
 
 ## Requirements
+You will need API access and keys for:
+- Together AI API
+- Tavily API
+- OpenAI API
 
-- API access and keys for:
-  - **OpenRouter API**
-  - **SERPAPI API**
-  - **Jina API**
+### **Installation & Setup**
+#### **1. Clone or Open the Notebook**
+Download the notebook file or open it in **Google Colab**.
 
-## Setup
+#### **2. Install Dependencies**
+Run the following command in a Colab cell to install necessary libraries:
+```python
+!pip install aiohttp together tavily openai
+```
 
-1. **Clone or Open the Notebook:**
-   - Download the notebook file or open it directly in [Google Colab](https://colab.research.google.com/github/mshumer/OpenDeepResearcher/blob/main/open_deep_researcher.ipynb).
-
-2. **Install `nest_asyncio`:**
-
-   Run the first cell to set up `nest_asyncio`.
-
-3. **Configure API Keys:**
-   - Replace the placeholder values in the notebook for `OPENROUTER_API_KEY`, `SERPAPI_API_KEY`, and `JINA_API_KEY` with your actual API keys.
+#### **3. Configure API Keys**
+Set up API keys securely in **Google Colab**:
+```python
+from google.colab import userdata
+TOGETHER_API_KEY = userdata.get("TOGETHER_API_KEY")
+TAVILY_API_KEY = userdata.get("TAVILY_API_KEY")
+OPENAI_API_KEY = userdata.get("OPENAI_API_KEY")
+```
 
 ## Usage
+#### **1. Run the Notebook**
+Execute all cells in order. The notebook will prompt you for:
+- A **research query/topic**.
+- An optional **maximum number of iterations** (default is **2** to prevent excessive API usage).
 
-1. **Run the Notebook Cells:**
-   Execute all cells in order. The notebook will prompt you for:
-   - A research query/topic.
-   - An optional maximum number of iterations (default is 10).
+#### **2. Research Process**
+1. **Initial Query & Search Generation**: Together AI generates initial search queries.
+2. **Web Search & Content Extraction**: Tavily API performs searches, extracts content, and filters out irrelevant links.
+3. **Iterative Refinement**: AI evaluates gathered data, determines if more research is needed, and refines search queries accordingly.
+4. **Final Report Generation**: OpenAI (O1-Mini) compiles all relevant information into a **detailed and structured research report**.
 
-2. **Follow the Research Process:**
-   - **Initial Query & Search Generation:** The notebook uses the LLM to generate initial search queries.
-   - **Asynchronous Searches & Extraction:** It performs SERPAPI searches for all queries concurrently, aggregates unique links, and processes each link in parallel to determine page usefulness and extract relevant context.
-   - **Iterative Refinement:** After each round, the aggregated context is analyzed by the LLM to determine if further search queries are needed.
-   - **Final Report:** Once the LLM indicates that no further research is needed (or the iteration limit is reached), a final report is generated based on all gathered context.
-
-3. **View the Final Report:**
-   The final comprehensive report will be printed in the output.
+#### **3. View the Final Report**
+Once the research loop is complete, the final comprehensive report is generated and printed in the output.
 
 ## How It Works
+### **1. Input & Query Generation**
+- The user provides a research topic.
+- Together AI generates up to **four** distinct search queries to maximize relevant results.
 
-1. **Input & Query Generation:**  
-   The user enters a research topic, and the LLM generates up to four distinct search queries.
+### **2. Concurrent Search & Processing**
+- **Tavily API** performs searches for all queries asynchronously.
+- Aggregates and deduplicates links within each iteration.
+- Extracts webpage content and evaluates its relevance.
 
-2. **Concurrent Search & Processing:**  
-   - **SERPAPI:** Each search query is sent to SERPAPI concurrently.
-   - **Deduplication:** All retrieved links are aggregated and deduplicated within the current iteration.
-   - **Jina & LLM:** Each unique link is processed concurrently to fetch webpage content via Jina, evaluate its usefulness with the LLM, and extract relevant information if the page is deemed useful.
+### **3. Iterative Refinement**
+- If more data is needed, the system generates **new** search queries and repeats the process.
+- The loop terminates when sufficient information is gathered or the iteration limit is reached.
 
-3. **Iterative Refinement:**  
-   The system passes the aggregated context to the LLM to determine if further search queries are needed. New queries are generated if required; otherwise, the loop terminates.
-
-4. **Final Report Generation:**  
-   All gathered context is compiled and sent to the LLM to produce a final, comprehensive report addressing the original query.
+### **4. Final Report Generation**
+- OpenAI **O1-Mini** processes the collected context and generates a **long-form research report**.
+- Ensures structured formatting and deep insights.
 
 ## Troubleshooting
+#### **1. RuntimeError with asyncio**
+If you encounter:
+```
+RuntimeError: asyncio.run() cannot be called from a running event loop
+```
+Ensure that you are using Google Colab and handling asynchronous execution properly.
 
-- **RuntimeError with asyncio:**  
-  If you encounter an error like:
-  ```
-  RuntimeError: asyncio.run() cannot be called from a running event loop
-  ```
-  Ensure you have applied `nest_asyncio` as shown in the setup section.
+#### **2. API Issues**
+- Check your API keys and ensure they are correctly set up.
+- Verify that you are not exceeding API rate limits.
+- If OpenAI model `o1-mini` fails, ensure you have access by checking: [OpenAI API Models](https://api.together.ai/models).
 
-- **API Issues:**  
-  Verify that your API keys are correct and that you are not exceeding any rate limits.
+## License
+OpenDeepResearcher is released under the **MIT License**.
 
----
-
-Follow me on [X](https://x.com/mattshumer_) for updates on this and other AI things I'm working on.
-
-OpenDeepResearcher is released under the MIT License. See the LICENSE file for more details.
+## Follow for Updates
+Stay updated with AI research advancements by following me on [X (Twitter)](https://twitter.com).
